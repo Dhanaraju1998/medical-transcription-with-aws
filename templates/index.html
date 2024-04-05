@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech to Text Converter</title>
+    <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    .main-content {
+      min-height: 200px;
+      background-color: #f0f0f0;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-wrap: break-word;
+    }
+    .btn-style {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <h2>Speech to Text Converter (Doctor and Patient)</h2>
+      
+        <div class="main-content" id="transcript"></div>
+      
+        <div class="btn-style">
+          <button type="button" id="copyButton">Copy Text</button>
+          <button type="button" id="startButton">Start Listening</button>
+          <button type="button" id="stopButton">Stop Listening</button>
+          <button type="button" id="saveButton">Save Audio</button> 
+        </div>
+      </div>
+      
+    <script>
+      let startButton = document.getElementById("startButton");
+      let stopButton = document.getElementById("stopButton");
+      let speechrecognition =
+        window.webkitSpeechRecognition || window.SpeechRecognition;
+
+      let spRec = new speechrecognition();
+      spRec.continuous = true;
+      spRec.interimResults = true;
+      console.log(spRec);
+
+      startButton.addEventListener("click", () => {
+        spRec.start();
+      });
+
+      stopButton.addEventListener("click", () => {
+        spRec.stop();
+      });
+
+      spRec.onresult = (res) => {
+        console.log("Speech recognition result:", res.results);
+        let text = Array.from(res.results)
+          .map((r) => r[0])
+          .map((txt) => txt.transcript)
+          .join("");
+        console.log("Recognized text:", text);
+        document.getElementById("transcript").textContent = text;
+      };
+
+      copyButton.addEventListener("click", () => {
+      let textToCopy = document.getElementById("transcript").textContent;
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          alert("Text copied to clipboard!");
+        })
+        .catch((err) => {
+          console.error('Could not copy text: ', err);
+        });
+    });
+
+    document.getElementById("saveButton").addEventListener("click", () => {
+            let textToSave = document.getElementById("transcript").textContent;
+            fetch("/save_audio", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ text: textToSave }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error("Network response was not ok.");
+            })
+            .then(data => {
+                alert("Audio saved as: " + data.filename);
+            })
+            .catch(error => {
+                console.error('Error saving audio:', error);
+            });
+        });
+    </script>
+  </body>
+</html>

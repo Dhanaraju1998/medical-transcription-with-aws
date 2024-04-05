@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload Files to S3</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: rgb(174, 121, 57);
+      }
+
+      .card {
+        width: 97vw;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 0px;
+        margin-bottom: 20px;
+        background-color: rgb(255, 254, 254);
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+      }
+
+      h2 {
+        margin-top: 20px;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      li {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      audio,
+      video {
+        width: 96vw;
+        height: 96vh;
+      }
+
+      .transcript {
+        width: 50vw;
+        height: 20vh;
+        display: none;
+      }
+
+      .transcript.active {
+        display: block;
+      }
+
+      button {
+        margin-top: 10px;
+        background-color: #0b5fd4;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+
+      .transcript_text {
+        font-weight: 900;
+      }
+
+      .wait_text {
+        font-weight: 900;
+      }
+    </style>
+  </head>
+  <body>
+    <h2 style="color:white">List of Uploaded Files</h2>
+    <ul>
+      {% for file in files %}
+      <li>
+        {% if file.endswith('.mp3') %}
+        <div class="card">
+          <audio controls>
+            <source
+              src="https://d8g1d2owqlm6x.cloudfront.net/{{ file }}"
+              type="audio/mpeg"
+            />
+            Your browser does not support the audio element.
+          </audio>
+          {% if transcribed_files[file] %}
+          <div
+            class="transcript_text"
+            id="{{ file.replace('.', '_') }}_transcript"
+          ></div>
+          {% else %}
+          <button
+            id="transcribe_{{ file }}"
+            onclick="transcribe('{{ file }}', this)"
+          >
+            Transcribe
+          </button>
+          <div
+            class="transcript_text wait_text"
+            id="{{ file.replace('.', '_') }}_transcript"
+            style="display: none"
+          >
+            Please wait, transcription is in progress.
+          </div>
+          {% endif %}
+        </div>
+        {% elif file.endswith('.mp4') %}
+        <div class="card">
+          <video controls>
+            <source
+              src="https://d8g1d2owqlm6x.cloudfront.net/{{ file }}"
+              type="video/mp4"
+            />
+            Your browser does not support the video element.
+          </video>
+          {% if transcribed_files[file] %}
+          <div
+            class="transcript_text"
+            id="{{ file.replace('.', '_') }}_transcript"
+          ></div>
+          {% else %}
+          <button
+            id="transcribe_{{ file }}"
+            onclick="transcribe('{{ file }}', this)"
+          >
+            Transcribe
+          </button>
+          <div
+            class="transcript_text wait_text"
+            id="{{ file.replace('.', '_') }}_transcript"
+            style="display: none"
+          >
+            Please wait, transcription is in progress.
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+
+    <script>
+      function transcribe(file, button) {
+        const waitTextId = file.replace(".", "_") + "_transcript";
+        const waitTextElement = document.getElementById(waitTextId);
+        button.style.display = "none";
+        waitTextElement.style.display = "block";
+        waitTextElement.style.fontWeight = "bold";
+
+        fetch("/transcribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: `file_name=${file}`,
+        })
+          .then((response) => response.text())
+          .then((transcript) => {
+            const transcriptDivId = file.replace(".", "_") + "_transcript";
+            document.getElementById(transcriptDivId).innerText = transcript;
+            button.style.display = "none";
+            waitTextElement.style.display = "none";
+            document.getElementById(transcriptDivId).style.display = "block";
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+    </script>
+  </body>
+</html>

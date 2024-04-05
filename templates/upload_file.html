@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Transcription</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #c66d24cc;
+        }
+
+        .card {
+            width: 70vw;
+            height: 50vh;
+            background-color: #eee3e9;
+            border: 2px #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            width: 50vw;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone.hover {
+            border-color: #007bff;
+            background-color: #f0f9ff;
+        }
+
+        .drop-zone p {
+            margin: 0;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        label {
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            height: 40px;
+            width: 14vw;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .btn_container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .filename {
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 style="margin-bottom: 30px;">Upload Health Records (Mp3, Mp4)</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <div class="drop-zone" id="drop-zone">
+                <label for="file-input">
+                    <p>Click here to select files for upload</p>
+                    <input id="file-input" type="file" name="file" accept=".txt, .pdf, .mp4, .mp3" onchange="updateFileName(this)">
+                </label>
+            </div>
+            <div class="filename" id="filename-placeholder"></div>
+            <div class="btn_container">
+                <button class="" type="submit">Upload</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            const filenamePlaceholder = document.getElementById('filename-placeholder');
+            if (input.files.length > 0) {
+                filenamePlaceholder.textContent = 'Selected File: ' + input.files[0].name;
+            } else {
+                filenamePlaceholder.textContent = '';
+            }
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        if (success === 'true') {
+            alert('File uploaded successfully');
+        }
+    </script>
+</body>
+</html>
