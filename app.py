@@ -10,9 +10,9 @@ import tempfile
 app = Flask(__name__)
 
 
-ACCESS_KEY_ID = 'AKIAQ3EGPF7RCDUDEHUC'
-SECRET_ACCESS_KEY = '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'
-REGION_NAME = 'us-east-1'
+AWS_ACCESS_KEY_ID = 'AKIAQ3EGPF7RCDUDEHUC'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_REGION_NAME = 'us-east-1'
 S3_BUCKET_NAME = 'demobucketinput01'
 
 
@@ -23,9 +23,9 @@ def get_media_format(file_name):
 
 def upload_file_to_s3(file_path, bucket_name):
     s3 = boto3.client('s3',
-                      aws_access_key_id=ACCESS_KEY_ID,
-                      aws_secret_access_key=SECRET_ACCESS_KEY,
-                      region_name=REGION_NAME)
+                      aws_access_key_id=AWS_ACCESS_KEY_ID,
+                      aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                      region_name=AWS_REGION_NAME)
 
     try:
         unique_filename = str(uuid.uuid4()) + ".mp3"
@@ -47,7 +47,7 @@ def save_audio():
     tts.write_to_fp(audio_file)
     audio_file.close()
 
-    uploaded_filename = upload_file_to_s3(audio_file.name, BUCKET_NAME)
+    uploaded_filename = upload_file_to_s3(audio_file.name, S3_BUCKET_NAME)
     if uploaded_filename:
         return jsonify({'filename': uploaded_filename})
     else:
@@ -57,9 +57,9 @@ def save_audio():
 
 def retrieve_files_from_s3(bucket_name):
     s3 = boto3.client('s3',
-                      aws_access_key_id=ACCESS_KEY_ID,
-                      aws_secret_access_key=SECRET_ACCESS_KEY,
-                      region_name=REGION_NAME)
+                      aws_access_key_id=AWS_ACCESS_KEY_ID,
+                      aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                      region_name=AWS_REGION_NAME)
 
     try:
         response = s3.list_objects_v2(Bucket=bucket_name)
@@ -98,7 +98,7 @@ def upload():
     temp_file = tempfile.NamedTemporaryFile(delete=False)
     file.save(temp_file.name)
 
-    uploaded_filename = upload_file_to_s3(temp_file.name, BUCKET_NAME)
+    uploaded_filename = upload_file_to_s3(temp_file.name, S3_BUCKET_NAME)
 
     temp_file.close()
     os.unlink(temp_file.name)
@@ -107,7 +107,7 @@ def upload():
 
 @app.route('/files')
 def list_files():
-    files = retrieve_files_from_s3(BUCKET_NAME)
+    files = retrieve_files_from_s3(S3_BUCKET_NAME)
 
     transcribed_files = {}
     for file in files:
@@ -118,14 +118,14 @@ def list_files():
         if transcript_file_name in files:
             transcribed_files[file] = True
 
-    return render_template('files.html', files=files, transcribed_files=transcribed_files, bucket_name=BUCKET_NAME)
+    return render_template('files.html', files=files, transcribed_files=transcribed_files, bucket_name=S3_BUCKET_NAME)
 
 
 def extract_medical_terms(transcript_text):
     comprehend_medical_client = boto3.client('comprehendmedical',
-                                             aws_access_key_id=ACCESS_KEY_ID,
-                                             aws_secret_access_key=SECRET_ACCESS_KEY,
-                                             region_name=REGION_NAME)
+                                             aws_access_key_id=AWS_ACCESS_KEY_ID,
+                                             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                                             region_name=AWS_REGION_NAME)
 
     try:
         medical_entities = comprehend_medical_client.detect_entities_v2(Text=transcript_text)
@@ -148,18 +148,18 @@ def transcribe_file():
         return "Unsupported media format."
 
     transcribe_client = boto3.client('transcribe',
-                                     aws_access_key_id=ACCESS_KEY_ID,
-                                     aws_secret_access_key=SECRET_ACCESS_KEY,
-                                     region_name=REGION_NAME)
+                                     aws_access_key_id=AWS_ACCESS_KEY_ID,
+                                     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                                     region_name=AWS_REGION_NAME)
 
     job_name = f'transcription_job_{str(uuid.uuid4())}'
 
     transcribe_client.start_transcription_job(
         TranscriptionJobName=job_name,
-        Media={'MediaFileUri': f's3://{BUCKET_NAME}/{file_name}'},
+        Media={'MediaFileUri': f's3://{S3_BUCKET_NAME}/{file_name}'},
         MediaFormat=media_format,
         LanguageCode='en-US',
-        OutputBucketName=BUCKET_NAME
+        OutputBucketName=S3_BUCKET_NAME
     )
 
     while True:
@@ -174,11 +174,11 @@ def transcribe_file():
 
         try:
             s3 = boto3.client('s3',
-                              aws_access_key_id=ACCESS_KEY_ID,
-                              aws_secret_access_key=SECRET_ACCESS_KEY,
-                              region_name=REGION_NAME)
+                              aws_access_key_id=AWS_ACCESS_KEY_ID,
+                              aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                              region_name=AWS_REGION_NAME)
 
-            response = s3.get_object(Bucket=BUCKET_NAME, Key=os.path.basename(transcript_file_uri))
+            response = s3.get_object(Bucket=S3_BUCKET_NAME, Key=os.path.basename(transcript_file_uri))
             transcript_content = response['Body'].read().decode('utf-8')
 
             transcript_json = json.loads(transcript_content)
